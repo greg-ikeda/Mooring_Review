@@ -39,7 +39,7 @@ file.copy(from = fpath,
           to = save_folder)
 file.copy(from = fpath,
           to = archive)
-file.remove(from = fpath)
+
 
 #### Prep data and strip out the header #### 
 mooringdata <- mooringdata %>%
@@ -86,6 +86,15 @@ variables <- colnames(userdef[-remove_var])
 # Create Figures for each param -------------------------------------------
 myplots <- vector("list")
 count <- 0
+
+if(userdef_end - userdef_start < 21){
+  xdate_breaks <- "2 days"
+} else if(userdef_end - userdef_start > 33){
+  xdate_breaks <- "5 days"
+} else{
+  xdate_breaks <- "1 week"
+}
+
 for (variable in variables){
   variable <- as.name(variable)
   count <- count+1
@@ -98,7 +107,11 @@ for (variable in variables){
                               geom_point(aes_string(x = 'Datetime',
                                                     y = as.name(variable)),
                                          size = 0.7,
-                                         color = 'blue'))
+                                         color = 'blue')+
+                              scale_x_datetime(date_breaks = xdate_breaks, 
+                                               date_labels = "%m-%d",
+                                               expand = c(0, 0))+
+                              theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)))
   if(grepl("%", variable) == TRUE){
     variable <- str_replace_all(paste0(variable), "%", "percent" )
   } else if(grepl("/", variable) == TRUE){
@@ -112,17 +125,15 @@ for (variable in variables){
   htmlwidgets::saveWidget(ggplotly(myplots[[count]]), 
                           title = paste0(variable), 
                           file = paste0(userdef_save_directory, "/", as.character(count), "_", as.character(variable), ".html"))
-  beep(1)
-  Sys.sleep(1)
+  # Sys.sleep(1)
 }
 
 # Deletes the additional folders created by htmltools
 created_dirs <- list.dirs(userdef_save_directory)
 unlink(created_dirs[2:length(created_dirs)], recursive = TRUE)
 
-beep(5)
+file.remove(from = fpath)
 
-shell.exec(userdef_save_directory)
 # Stacked Plots -------------------------------------------------
 
 dir.create(paste0(userdef_save_directory, "/stacked"))
@@ -147,16 +158,37 @@ plotstack <- function(index1, index2){
   Sys.sleep(3)
 }
 
-# Salinity and DO
-plotstack(8, 4)
-# Salinity and Temperature
-plotstack(8, 1)
-# DO and Chl
-plotstack(4, 6)
-# DO and pH
-plotstack(4, 5)
-# Chl and Turbidity
-plotstack(6, 7)
-# Fluorescence and pH
-plotstack(6, 5)
+if(station == "PennCoveSurface"){
+  # Turbidity and Chl
+  plotstack(9, 8)
+  # pH and Chl
+  plotstack(7, 8)
+  # Nitrate and Chl
+  plotstack(14, 8)
+  # DO and Chl
+  plotstack(6, 8)
+  # DO and pH
+  plotstack(6, 7)
+  # DO and Salinity
+  plotstack(6, 10)
+  # Temperature and Salinity
+  plotstack(3, 10)
+} else if(station == "CoupevilleWharf"){
+  # Turbidity and Chl
+  plotstack(7, 6)
+  # pH and Chl
+  plotstack(5, 6)
+  # Nitrate and Chl
+  plotstack(12, 6)
+  # DO and Chl
+  plotstack(4, 6)
+  # DO and pH
+  plotstack(4, 5)
+  # DO and Salinity
+  plotstack(4, 8)
+  # Temperature and Salinity
+  plotstack(1, 8)
+}
+
+shell.exec(userdef_save_directory)
 

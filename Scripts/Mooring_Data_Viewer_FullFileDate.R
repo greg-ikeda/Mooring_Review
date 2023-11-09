@@ -41,7 +41,7 @@ file.copy(from = fpath,
           to = save_folder)
 file.copy(from = fpath,
           to = archive)
-file.remove(from = fpath)
+
 
 #### Load data and strip out the header #### 
 mooringdata <- mooringdata %>%
@@ -61,7 +61,6 @@ mooringdata_light <- mooringdata[-remove_cols]
 
 daysfwd <- Sys.Date()
 start_date <- min(mooringdata_light$Datetime)
-# end_date <- "2022-12-28"
 end_date <- max(mooringdata_light$Datetime)
 daysback <- as.numeric(as.numeric(end_date - start_date))
 
@@ -80,9 +79,21 @@ userdef_save_directory <- paste0(save_folder,"/", userdef_start_string, "--", us
 remove_var <- which(grepl(pattern = 'monthday|Datetime|year|month|day|hour|Date', colnames(userdef)), arr.ind = TRUE)
 variables <- colnames(userdef[-remove_var])
 
+
+
+
 # Create Figures for each param -------------------------------------------
 myplots <- vector("list")
 count <- 0
+
+if(userdef_end - userdef_start < 21){
+  xdate_breaks <- "2 days"
+} else if(userdef_end - userdef_start > 33){
+  xdate_breaks <- "5 days"
+} else{
+  xdate_breaks <- "1 week"
+}
+
 for (variable in variables){
   variable <- as.name(variable)
   count <- count+1
@@ -95,7 +106,11 @@ for (variable in variables){
                               geom_point(aes_string(x = 'Datetime',
                                                     y = as.name(variable)),
                                          size = 0.7,
-                                         color = 'blue'))
+                                         color = 'blue')+
+                              scale_x_datetime(date_breaks = xdate_breaks, 
+                                               date_labels = "%m-%d",
+                                               expand = c(0, 0))+
+                              theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust=1)))
   if(grepl("%", variable) == TRUE){
     variable <- str_replace_all(paste0(variable), "%", "percent" )
   } else if(grepl("/", variable) == TRUE){
@@ -109,15 +124,15 @@ for (variable in variables){
   htmlwidgets::saveWidget(ggplotly(myplots[[count]]), 
                           title = paste0(variable), 
                           file = paste0(userdef_save_directory, "/", as.character(count), "_", as.character(variable), ".html"))
-  beep(1)
-  Sys.sleep(1)
+  # beep(1)
+  # Sys.sleep(1)
 }
 
 # Deletes the additional folders created by htmltools
 created_dirs <- list.dirs(userdef_save_directory)
 unlink(created_dirs[2:length(created_dirs)], recursive = TRUE)
 
-
+file.remove(from = fpath)
 
 # Stacked Plots -----------------------------------------------------------
 
@@ -171,7 +186,7 @@ if(station == "Dockton"){
   plotstack(6, 4)
   # DO and Chl 1 
   plotstack(8, 11)
-  # DO and Chl 2
+  # DO and Chl 
   plotstack(9, 12)
   # DO and pH 1
   plotstack(8, 15)
@@ -227,7 +242,7 @@ if(station == "Dockton"){
   plotstack(9, 6)
 }
 
-beep(5)
+# beep(5)
 shell.exec(userdef_save_directory)
 
 
