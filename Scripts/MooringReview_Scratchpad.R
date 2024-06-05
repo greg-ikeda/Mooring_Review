@@ -24,3 +24,16 @@ q
                  color = Datetime),
              size = 0.7)
 ggplotly(q)
+
+
+# Boxplots ----------------------------------------------------------------
+
+
+boxplot_test_df <- mooringdata %>%
+  filter(year == 2021,
+         `Dissolved_Oxygen_%Sat` < 300) 
+
+ggplot(boxplot_test_df)+
+  geom_boxplot(fatten = 2,
+               aes(x = as.factor(month),
+                   y = `Dissolved_Oxygen_mg/L`))
